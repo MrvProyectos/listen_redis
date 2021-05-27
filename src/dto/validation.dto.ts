@@ -1,5 +1,5 @@
 import { IsBoolean, IsDefined, IsEnum, IsNotEmpty, IsNumber, IsString } from "class-validator";
-
+// cambiar nombre del dto
 export class ValidationDTO{
     constructor(
         data: ValidationDTO

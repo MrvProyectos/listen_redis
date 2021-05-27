@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Res } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus } from '@nestjs/common';
 import { Message } from '@google-cloud/pubsub';
 import { EventPattern } from '@nestjs/microservices';
 import { ValidationDTO } from './dto/validation.dto';
@@ -16,23 +16,23 @@ export class AppController {
   ){}
 
   @EventPattern(process.env.GCLOUD_SUBSCRIPTION_NAME)
+  @HttpCode(HttpStatus.OK)
   async messageHandler(message: Message) {
 
-    try{
       const dataSub = message.data ? message.data.toString() : null;
       const validationResult: ValidationDTO = JSON.parse(dataSub);
       const result = new ValidationDTO(validationResult);
       const validation = await validate(result);
 
-      if (validation.length === 0){      
-        await this._redisService.postData(validationResult.id.toString(), JSON.stringify(validationResult));
-        this._loggerService.customInfo({}, {message: "Message Consumed"});
+      await this._redisService.saveData(validationResult.id.toString(), JSON.stringify(validationResult));
+
+      if (validation.length === 0){
         message.ack();
-      } else {
-        this._loggerService.customError({}, {message: "Error consuming message"});
+        this._loggerService.customInfo({}, {message: "Message Consumed"});
+        return {
+          status: HttpStatus.OK,
+          statusDescription: 'Message Consumed'
+        };
       }
-    }catch(error) {
-      return (HttpStatus.INTERNAL_SERVER_ERROR);
-    }      
   }
 }
