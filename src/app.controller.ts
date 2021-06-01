@@ -21,18 +21,9 @@ export class AppController {
 
       const dataSub = message.data ? message.data.toString() : null;
       const validationResult: ValidationDTO = JSON.parse(dataSub);
-      const result = new ValidationDTO(validationResult);
-      const validation = await validate(result);
 
       await this._redisService.saveData(validationResult.id.toString(), JSON.stringify(validationResult));
-
-      if (validation.length === 0){
-        message.ack();
-        this._loggerService.customInfo({}, {message: "Message Consumed"});
-        return {
-          status: HttpStatus.OK,
-          statusDescription: 'Message Consumed'
-        };
-      }
-  }
+      message.ack();
+      this._loggerService.customInfo({}, {message: "Message Consumed"});
+  };
 }

@@ -1,4 +1,6 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { ValidationDTO } from 'src/dto/validation.dto';
 import { LoggerService } from 'src/logger/logger.service';
 
 const asyncRedis = require("async-redis");
@@ -10,13 +12,16 @@ createClient.on("error", function (err) {
 
 @Injectable()
 export class RedisService {
-
     constructor(private readonly _loggerService: LoggerService){}
     async saveData(key: string, value: any){
 
-        const dataString: string = await createClient.set(key, value);
+        const dataString: any = await createClient.set(key, value);
+        // DTO
+        const validationResult: ValidationDTO = dataString;
+        const result = new ValidationDTO(validationResult);
+        const validation = await validate(result);
 
-        if (key && createClient){
+        if (dataString !== null && validation.length > 0){
             this._loggerService.customInfo({}, {message: "Message Save Redis"});
             return JSON.stringify(dataString);
         }else{
