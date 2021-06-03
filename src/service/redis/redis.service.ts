@@ -13,19 +13,28 @@ createClient.on("error", function (err) {
 @Injectable()
 export class RedisService {
     constructor(private readonly _loggerService: LoggerService){}
-    async saveData(key: string, value: any){
+    async saveData(key: string, dataDTO: any){
 
-        const dataString: any = await createClient.set(key, value);
         // DTO
-        const validationResult: ValidationDTO = dataString;
+        const validationResult: ValidationDTO = dataDTO;
         const result = new ValidationDTO(validationResult);
         const validation = await validate(result);
-
-        if (dataString !== null && validation.length > 0){
-            this._loggerService.customInfo({}, {message: "Message Save Redis"});
-            return JSON.stringify(dataString);
+        
+        if (validation.length > 0){
+            // SAVE DATA REDIS
+            const dataString: any = await createClient.set(key, dataDTO);
+            if (dataString !== null){
+                this._loggerService.customInfo({}, {message: "Message Save Redis"});
+                return JSON.stringify(dataString);
+            }else{
+                this._loggerService.customError({}, {message: "Internal Server Error - Service saveData"});
+                throw new HttpException({
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    statusMessage: 'INTERNAL SERVER ERROR'
+                }, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }else{
-            this._loggerService.customError({}, {message: "Internal Server Error - Service"});
+            this._loggerService.customError({}, {message: "Internal Server Error - Service validateDTO"});
             throw new HttpException({
                 status: HttpStatus.INTERNAL_SERVER_ERROR,
                 statusMessage: 'INTERNAL SERVER ERROR'
